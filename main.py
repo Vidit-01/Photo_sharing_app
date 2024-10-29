@@ -1,15 +1,10 @@
 
 import math
-import smtplib
 import difflib
 import random
 import flask
 import os
-import multiprocessing
 from importlib_metadata import method_cache
-s = smtplib.SMTP('smtp.gmail.com', 587)
-s.starttls()
-s.login("jarvis.v.assistant@gmail.com", "jarvis_zcb123")
 app = flask.Flask(__name__)
 app.secret_key = "abcd123"
 app.config['UPLOAD_FOLDER'] = 'static'
@@ -22,6 +17,7 @@ def show(user):
         
         images = {}
         following = f'static/Users/{user}/following'
+        newpe = []
         f = open(following)
         follwings = f.readlines()
         f.close()
@@ -32,11 +28,14 @@ def show(user):
             for file in files:
                 rasta = path+'/'+file
                 images[rasta] = userr
+        for dire in os.listdir('static/Users'):
+            newpe.append(dire)
 
         items = list(images.items())   
         print(items)    
+        random.shuffle(newpe)
         random.shuffle(items)
-        return flask.render_template('index.html',images = items,user=user)
+        return flask.render_template('index.html',images = items[0:10],user=user[0:10], newuser=newpe[0:6])
 
 
 
@@ -93,7 +92,8 @@ def otp(user,pass1,email,phone):
             f.close()  
             f = open(f"static/Users/{user}/followers","w")   
             f.close()
-            f = open(f"static/Users/{user}/following","w")   
+            f = open(f"static/Users/{user}/following","w")  
+            f.write("maindev\n") 
             f.close()
             f = open('static/images/pic.png','rb')
             data = f.read()
@@ -144,17 +144,37 @@ def register():
             
 
                 if pass2 == pass1:
-                    flask.session['password'] = pass1 
-                    digits="0123456789"
-                    print(digits)
-                    OTP=""
-                    for i in range(6):
-                        OTP+=digits[math.floor(random.random()*10)]
-                    otp = OTP + " is your OTP"
-                    msg= otp 
-                    flask.session['otp'] = OTP
-                    s.sendmail('&&&&&&&&&&&',email,msg)
-                    return flask.render_template('otp.html')
+                    flask.session['password'] = pass1     
+                    user = flask.session['user'] 
+                    email = flask.session['email'] 
+                    phone = flask.session['phone'] 
+                    pass1 = flask.session['password']                
+                    os.mkdir(f"static/Users/{user}")
+                    os.mkdir(f"static/Users/{user}/post")
+                    os.mkdir(f'static/Users/{user}/messages')
+                    f = open(f"static/Users/{user}/passwd.txt","w")
+                    f.write(pass1) 
+                    f.close()  
+                    f = open(f"static/Users/{user}/followers","w")   
+                    f.close()
+                    f = open(f"static/Users/{user}/following","w")   
+                    f.close()
+                    f = open('static/images/pic.png','rb')
+                    data = f.read()
+                    f.close()
+                    f = open(f"static/Users/{user}/pic.png","wb")  
+                    f.write(data) 
+                    f.close()
+                    f = open(f"static/Users/{user}/email","w")   
+                    f.write(email)
+                    f.close()
+                    f = open(f"static/Users/{user}/phone","w") 
+                    f.write(phone)  
+                    
+                    f.close()
+                    flask.session.clear()
+                    return flask.redirect('/')
+            
                 else:
                     flask.flash("Password Does not Match",'error')
                     return flask.redirect("/register")
